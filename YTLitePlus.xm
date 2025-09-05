@@ -65,13 +65,14 @@ static NSString *accessGroupID() {
 %hook YTAsyncCollectionView
 - (id)cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     UICollectionViewCell *cell = %orig;
-    NSString *idToRemove = [[cell node] accessibilityIdentifier];
-    os_log(log_target, "YTLite -- idToRemove: %{public}s", [idToRemove cStringUsingEncoding:NSUTF8StringEncoding]);
+    NSString *idToRemove = [cell accessibilityIdentifier];
+    os_log(log_target, "YTLite -- parent idToRemove: %{public}s", [idToRemove cStringUsingEncoding:NSUTF8StringEncoding]);
 
     if ([cell isKindOfClass:objc_lookUpClass("_ASCollectionViewCell")]) {
         _ASCollectionViewCell *cell = %orig;
         if ([cell respondsToSelector:@selector(node)]) {
             NSString *idToRemove = [[cell node] accessibilityIdentifier];
+            os_log(log_target, "YTLite -- node idToRemove: %{public}s", [idToRemove cStringUsingEncoding:NSUTF8StringEncoding]);
             if ([idToRemove isEqualToString:@"statement_banner.view"] ||
                 (([idToRemove isEqualToString:@"eml.shorts-grid"] || [idToRemove isEqualToString:@"eml.shorts-shelf"]))) {
                 [self removeCellsAtIndexPath:indexPath];
