@@ -67,7 +67,7 @@
 #define GetFloat(key) [[NSUserDefaults standardUserDefaults] floatForKey:key] // float type
 
 // Logging macros
-#define YTL_LOG(format, ...) os_log(OS_LOG_DEFAULT, "[YTLite] " format, ##__VA_ARGS__)
+#define YTL_LOG(format, ...) os_log(OS_LOG_DEFAULT, "%{public}s" format, "[YTLite] ", ##__VA_ARGS__)
 
 // Player Gesture selected mode enum
 typedef NS_ENUM(NSUInteger, GestureMode) {
