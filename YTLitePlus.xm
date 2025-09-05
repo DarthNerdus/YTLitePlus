@@ -1,4 +1,7 @@
 #import "YTLitePlus.h"
+#import <os/log.h>
+
+os_log_t log = os_log_create("com.google.ios.youtube", "YTLite");
 
 NSBundle *YTLitePlusBundle() {
     static NSBundle *bundle = nil;
@@ -48,7 +51,7 @@ static NSString *accessGroupID() {
 
     NSArray *shortsToRemove = @[@"shorts_shelf.eml", @"shorts_video_cell.eml", @"6Shorts"];
     for (NSString *shorts in shortsToRemove) {
-        YTL_LOG("description = %@", description);
+        os_log(log, "YTLite -- description: %{public}s", description);
         if ([description containsString:shorts] && ![description containsString:@"history*"]) {
             return nil;
         }
@@ -67,7 +70,7 @@ static NSString *accessGroupID() {
         _ASCollectionViewCell *cell = %orig;
         if ([cell respondsToSelector:@selector(node)]) {
             NSString *idToRemove = [[cell node] accessibilityIdentifier];
-            YTL_LOG("idToRemove = %@", idToRemove);
+            os_log(log, "YTLite -- idToRemove: %{public}s", idToRemove);
             if ([idToRemove isEqualToString:@"statement_banner.view"] ||
                 (([idToRemove isEqualToString:@"eml.shorts-grid"] || [idToRemove isEqualToString:@"eml.shorts-shelf"]))) {
                 [self removeCellsAtIndexPath:indexPath];
@@ -1272,7 +1275,7 @@ NSInteger pageStyle = 0;
 
 # pragma mark - ctor
 %ctor {
-    YTL_LOG("YTLite tweak loaded successfully!");
+    os_log(log, "YTLite -- inserted!");
 
     %init;
     // Access YouGroupSettings methods
