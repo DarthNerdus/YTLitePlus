@@ -11,6 +11,7 @@
 #import <AVKit/AVKit.h>         // For AVPlayer and AVPlayerViewController
 #import <MobileCoreServices/MobileCoreServices.h> // For kUTTypeMovie and kUTTypeVideo
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import <os/log.h>
 
 #import "Tweaks/YouTubeHeader/YTAppDelegate.h"
 #import "Tweaks/YouTubeHeader/YTPlayerViewController.h"
@@ -65,6 +66,13 @@
 #define GetInteger(key) [[NSUserDefaults standardUserDefaults] integerForKey:key] // NSInteger type
 #define GetFloat(key) [[NSUserDefaults standardUserDefaults] floatForKey:key] // float type
 
+// Logging macros
+#define YTL_LOG(format, ...) os_log(OS_LOG_DEFAULT, "[YTLite] " format, ##__VA_ARGS__)
+#define YTL_LOG_ERROR(format, ...) os_log_error(OS_LOG_DEFAULT, "[YTLite] ERROR: " format, ##__VA_ARGS__)
+#define YTL_FILE_LOG(format, ...) YTLWriteLog([NSString stringWithFormat:format, ##__VA_ARGS__])
+
+// Function declaration for file logging
+static void YTLWriteLog(NSString *message);
 
 // Player Gesture selected mode enum
 typedef NS_ENUM(NSUInteger, GestureMode) {

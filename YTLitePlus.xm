@@ -1,5 +1,26 @@
 #import "YTLitePlus.h"
 
+// File-based logging function
+static void YTLWriteLog(NSString *message) {
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *logPath = [documentsPath stringByAppendingPathComponent:@"YTLite.log"];
+    
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString *timestamp = [formatter stringFromDate:[NSDate date]];
+    
+    NSString *logEntry = [NSString stringWithFormat:@"[%@] %@\n", timestamp, message];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:logPath]) {
+        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
+        [fileHandle seekToEndOfFile];
+        [fileHandle writeData:[logEntry dataUsingEncoding:NSUTF8StringEncoding]];
+        [fileHandle closeFile];
+    } else {
+        [logEntry writeToFile:logPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    }
+}
+
 NSBundle *YTLitePlusBundle() {
     static NSBundle *bundle = nil;
     static dispatch_once_t onceToken;
@@ -34,6 +55,58 @@ static NSString *accessGroupID() {
 }
 
 # pragma mark - Tweaks
+
+%hook YTIElementRenderer
+- (NSData *)elementData {
+    if (self.hasCompatibilityOptions && self.compatibilityOptions.hasAdLoggingData && ytlBool(@"noAds")) return nil;
+
+    NSString *description = [self description];
+
+    NSArray *ads = @[@"brand_promo", @"product_carousel", @"product_engagement_panel", @"product_item", @"text_search_ad", @"text_image_button_layout", @"carousel_headered_layout", @"carousel_footered_layout", @"square_image_layout", @"landscape_image_wide_button_layout", @"feed_ad_metadata"];
+    if (ytlBool(@"noAds") && [ads containsObject:description]) {
+        return [NSData data];
+    }
+
+    NSArray *shortsToRemove = @[@"shorts_shelf.eml", @"shorts_video_cell.eml", @"6Shorts"];
+    for (NSString *shorts in shortsToRemove) {
+        YTL_LOG("description = %@", description);
+        YTL_FILE_LOG(@"Shorts element description: %@", description);
+        if (ytlBool(@"hideShorts") && [description containsString:shorts] && ![description containsString:@"history*"]) {
+            return nil;
+        }
+    }
+
+    return %orig;
+}
+%end
+
+// Remove Premium Pop-up, Horizontal Video Carousel and Shorts (https://github.com/MiRO92/YTNoShorts)
+%hook YTAsyncCollectionView
+- (id)cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    UICollectionViewCell *cell = %orig;
+
+    if ([cell isKindOfClass:objc_lookUpClass("_ASCollectionViewCell")]) {
+        _ASCollectionViewCell *cell = %orig;
+        if ([cell respondsToSelector:@selector(node)]) {
+            NSString *idToRemove = [[cell node] accessibilityIdentifier];
+            YTL_LOG("idToRemove = %@", idToRemove);
+            YTL_FILE_LOG("idToRemove = %@", idToRemove);
+            if ([idToRemove isEqualToString:@"statement_banner.view"] ||
+                (([idToRemove isEqualToString:@"eml.shorts-grid"] || [idToRemove isEqualToString:@"eml.shorts-shelf"]) && ytlBool(@"hideShorts"))) {
+                [self removeCellsAtIndexPath:indexPath];
+            }
+        }
+    } else if (([cell isKindOfClass:objc_lookUpClass("YTReelShelfCell")] && ytlBool(@"hideShorts")) ||
+        ([cell isKindOfClass:objc_lookUpClass("YTHorizontalCardListCell")] && ytlBool(@"noContinueWatching"))) {
+        [self removeCellsAtIndexPath:indexPath];
+    } return %orig;
+}
+
+%new
+- (void)removeCellsAtIndexPath:(NSIndexPath *)indexPath {
+    [self deleteItemsAtIndexPaths:@[indexPath]];
+}
+%end
 
 // Activate FLEX
 %hook YTAppDelegate
@@ -1222,6 +1295,8 @@ NSInteger pageStyle = 0;
 
 # pragma mark - ctor
 %ctor {
+    YTL_LOG("YTLite tweak loaded successfully!");
+
     %init;
     // Access YouGroupSettings methods
     dlopen([[NSString stringWithFormat:@"%@/Frameworks/YouGroupSettings.dylib", [[NSBundle mainBundle] bundlePath]] UTF8String], RTLD_LAZY);
