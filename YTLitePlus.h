@@ -120,6 +120,7 @@ typedef NS_ENUM(NSUInteger, GestureSection) {
 
 @interface YTAsyncCollectionView : UICollectionView
 - (void)removeShortsAndFeaturesAdsAtIndexPath:(NSIndexPath *)indexPath;
+- (void)removeCellsAtIndexPath:(NSIndexPath *)indexPath;
 @end
 
 @interface YTPlaybackButton : UIControl
