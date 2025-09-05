@@ -68,11 +68,6 @@
 
 // Logging macros
 #define YTL_LOG(format, ...) os_log(OS_LOG_DEFAULT, "[YTLite] " format, ##__VA_ARGS__)
-#define YTL_LOG_ERROR(format, ...) os_log_error(OS_LOG_DEFAULT, "[YTLite] ERROR: " format, ##__VA_ARGS__)
-#define YTL_FILE_LOG(format, ...) YTLWriteLog([NSString stringWithFormat:format, ##__VA_ARGS__])
-
-// Function declaration for file logging
-static void YTLWriteLog(NSString *message);
 
 // Player Gesture selected mode enum
 typedef NS_ENUM(NSUInteger, GestureMode) {
